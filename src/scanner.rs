@@ -1,6 +1,9 @@
 use std::any::Any;
 
-use crate::token::{Token, TokenType};
+use crate::{
+    errors::error,
+    token::{Token, TokenType},
+};
 
 pub struct Scanner {
     source: String,
@@ -55,12 +58,62 @@ impl Scanner {
             '+' => self.add_basic_token(TokenType::PLUS),
             ';' => self.add_basic_token(TokenType::SEMICOLON),
             '*' => self.add_basic_token(TokenType::STAR),
-            _ => {} // not yet
+            '!' => self.parse_one_or_two_token(TokenType::BANG, TokenType::BANG_EQUAL, '='),
+            '=' => self.parse_one_or_two_token(TokenType::EQUAL, TokenType::EQUAL_EQUAL, '='),
+            '<' => self.parse_one_or_two_token(TokenType::LESS, TokenType::LESS_EQUAL, '='),
+            '>' => self.parse_one_or_two_token(TokenType::GREATER, TokenType::GREATER_EQUAL, '='),
+            '/' => self.parse_slash(),
+            '\n' => self.line += 1,
+            ' ' | '\r' | '\t' => {} // do nothing
+            _ => error(self.line, String::from("Unexpected character.")),
+        }
+    }
+
+    fn parse_slash(&mut self) {
+        if self.match_next('/') {
+            loop {
+                if !self.is_at_end() && self.peek() != '\n' {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+        } else {
+            self.add_basic_token(TokenType::SLASH)
+        }
+    }
+
+    fn peek(&self) -> char {
+        if self.is_at_end() {
+            '\0'
+        } else {
+            self.source.chars().nth(self.current).unwrap()
+        }
+    }
+
+    fn parse_one_or_two_token(&mut self, default: TokenType, other: TokenType, next_char: char) {
+        let token_type = if self.match_next(next_char) {
+            self.advance();
+            other
+        } else {
+            default
+        };
+
+        self.add_basic_token(token_type);
+    }
+
+    fn match_next(&mut self, expected: char) -> bool {
+        if self.is_at_end() {
+            false
+        } else {
+            match self.source.chars().nth(self.current) {
+                Some(c) => c == expected,
+                None => false,
+            }
         }
     }
 
     fn advance(&mut self) -> char {
-        println!("{:?}", self.source.chars().nth(self.current));
         let c = self.source.chars().nth(self.current).unwrap();
         self.current += 1;
         c

@@ -10,7 +10,4 @@ pub fn run_file(path: String) {
             panic!("Failed to run script file: {:?}", e)
         }
     }
-    if errors::had_error() {
-        process::exit(65)
-    }
 }
