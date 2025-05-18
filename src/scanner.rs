@@ -6,7 +6,7 @@ use crate::{
 };
 
 pub struct Scanner {
-    source: String,
+    source: Vec<char>,
     tokens: Vec<Token>,
     start: usize,   // first character in lexeme being scanned
     current: usize, // current character being scanned
@@ -16,7 +16,7 @@ pub struct Scanner {
 impl Scanner {
     pub fn new(source: String) -> Self {
         Self {
-            source,
+            source: source.chars().collect(),
             tokens: Vec::new(),
             start: 0,
             current: 0,
@@ -87,7 +87,7 @@ impl Scanner {
         if self.is_at_end() {
             '\0'
         } else {
-            self.source.chars().nth(self.current).unwrap()
+            *self.source.get(self.current).unwrap()
         }
     }
 
@@ -106,17 +106,17 @@ impl Scanner {
         if self.is_at_end() {
             false
         } else {
-            match self.source.chars().nth(self.current) {
-                Some(c) => c == expected,
+            match self.source.get(self.current) {
+                Some(c) => *c == expected,
                 None => false,
             }
         }
     }
 
     fn advance(&mut self) -> char {
-        let c = self.source.chars().nth(self.current).unwrap();
+        let c = self.source.get(self.current).unwrap();
         self.current += 1;
-        c
+        *c
     }
 
     fn add_basic_token(&mut self, which: TokenType) {
@@ -124,7 +124,9 @@ impl Scanner {
     }
 
     fn add_token(&mut self, which: TokenType, literal: Option<Box<dyn Any>>) {
-        let text = self.source[self.start..self.current].to_string();
+        let text = self.source[self.start..self.current]
+            .iter()
+            .collect::<String>();
         self.tokens
             .push(Token::new(which, text, literal, self.line));
     }
