@@ -1,5 +1,5 @@
-use crate::{errors, run};
-use std::{fs, process};
+use crate::run;
+use std::fs;
 
 pub fn run_file(path: String) {
     let data = fs::read_to_string(path);

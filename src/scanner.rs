@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use crate::{
-    errors::error,
+    errors::{self, error},
     token::{Token, TokenType},
 };
 
@@ -31,7 +31,7 @@ impl Scanner {
         }
 
         self.tokens.push(Token::new(
-            TokenType::EOF,
+            TokenType::EndOfFIle,
             String::from(""),
             None,
             self.line,
@@ -48,46 +48,123 @@ impl Scanner {
         let c: char = self.advance();
 
         match c {
-            '(' => self.add_basic_token(TokenType::LEFT_PAREN),
-            ')' => self.add_basic_token(TokenType::RIGHT_PAREN),
-            '{' => self.add_basic_token(TokenType::LEFT_BRACE),
-            '}' => self.add_basic_token(TokenType::RIGHT_BRACE),
-            ',' => self.add_basic_token(TokenType::COMMA),
-            '.' => self.add_basic_token(TokenType::DOT),
-            '-' => self.add_basic_token(TokenType::MINUS),
-            '+' => self.add_basic_token(TokenType::PLUS),
-            ';' => self.add_basic_token(TokenType::SEMICOLON),
-            '*' => self.add_basic_token(TokenType::STAR),
-            '!' => self.parse_one_or_two_token(TokenType::BANG, TokenType::BANG_EQUAL, '='),
-            '=' => self.parse_one_or_two_token(TokenType::EQUAL, TokenType::EQUAL_EQUAL, '='),
-            '<' => self.parse_one_or_two_token(TokenType::LESS, TokenType::LESS_EQUAL, '='),
-            '>' => self.parse_one_or_two_token(TokenType::GREATER, TokenType::GREATER_EQUAL, '='),
+            '(' => self.add_basic_token(TokenType::LeftParen),
+            ')' => self.add_basic_token(TokenType::RightParen),
+            '{' => self.add_basic_token(TokenType::LeftBrace),
+            '}' => self.add_basic_token(TokenType::RightBrace),
+            ',' => self.add_basic_token(TokenType::Comma),
+            '.' => self.add_basic_token(TokenType::Dot),
+            '-' => self.add_basic_token(TokenType::Minus),
+            '+' => self.add_basic_token(TokenType::Plus),
+            ';' => self.add_basic_token(TokenType::Semicolon),
+            '*' => self.add_basic_token(TokenType::Star),
+            '!' => self.parse_one_or_two_token(TokenType::Bang, TokenType::BangEqual, '='),
+            '=' => self.parse_one_or_two_token(TokenType::Equal, TokenType::EqualEqual, '='),
+            '<' => self.parse_one_or_two_token(TokenType::Less, TokenType::LessEqual, '='),
+            '>' => self.parse_one_or_two_token(TokenType::Greater, TokenType::GreaterEqual, '='),
             '/' => self.parse_slash(),
+            '"' => self.parse_string(),
             '\n' => self.line += 1,
             ' ' | '\r' | '\t' => {} // do nothing
-            _ => error(self.line, String::from("Unexpected character.")),
+            _ => {
+                if c.is_digit(10) {
+                    self.parse_number();
+                } else if c.is_alphanumeric() {
+                    self.parse_identifier()
+                } else {
+                    error(self.line, String::from("Unexpected character."))
+                }
+            }
         }
+    }
+
+    fn parse_identifier(&mut self) {
+        while self.peek().is_alphanumeric() {
+            self.advance();
+        }
+
+        let identifier = self.source[self.start..self.current]
+            .iter()
+            .collect::<String>();
+
+        if let Some(which) = self.match_identifier(identifier.as_str()) {
+            self.add_token(which, Some(Box::new(identifier.clone())));
+        } else {
+            self.add_token(TokenType::Identifier, Some(Box::new(identifier)));
+        }
+    }
+
+    fn parse_number(&mut self) {
+        while self.peek().is_digit(10) {
+            self.advance();
+        }
+
+        if self.peek() == '.' && self.peek_next().is_digit(10) {
+            self.advance();
+
+            while self.peek().is_digit(10) {
+                self.advance();
+            }
+        }
+
+        let n = self.source[self.start..self.current]
+            .iter()
+            .collect::<String>()
+            .parse::<f64>();
+
+        if let Ok(n) = n {
+            self.add_token(TokenType::Number, Some(Box::new(n)));
+        } else {
+            errors::error(self.line, String::from("Unable to parse number."));
+        }
+    }
+
+    fn parse_string(&mut self) {
+        while !self.is_at_end() && self.peek() != '"' {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            errors::error(self.line, String::from("Unterminated string."))
+        }
+
+        // advance past closing quotation mark
+        self.advance();
+
+        // trim surrounding quotation marks and turn into String
+        let text = self.source[self.start + 1..self.current - 1]
+            .iter()
+            .collect::<String>();
+
+        self.add_token(TokenType::String, Some(Box::new(text)));
     }
 
     fn parse_slash(&mut self) {
         if self.match_next('/') {
-            loop {
-                if !self.is_at_end() && self.peek() != '\n' {
-                    self.advance();
-                } else {
-                    break;
-                }
+            while !self.is_at_end() && self.peek() != '\n' {
+                self.advance();
             }
         } else {
-            self.add_basic_token(TokenType::SLASH)
+            self.add_basic_token(TokenType::Slash)
         }
     }
 
     fn peek(&self) -> char {
-        if self.is_at_end() {
+        if self.current >= self.source.len() {
             '\0'
         } else {
             *self.source.get(self.current).unwrap()
+        }
+    }
+
+    fn peek_next(&self) -> char {
+        if self.current + 1 >= self.source.len() {
+            '\0'
+        } else {
+            *self.source.get(self.current + 1).unwrap()
         }
     }
 
@@ -129,5 +206,27 @@ impl Scanner {
             .collect::<String>();
         self.tokens
             .push(Token::new(which, text, literal, self.line));
+    }
+
+    fn match_identifier(&self, identifier: &str) -> Option<TokenType> {
+        match identifier {
+            "and" => Some(TokenType::And),
+            "class" => Some(TokenType::Class),
+            "else" => Some(TokenType::Else),
+            "false" => Some(TokenType::False),
+            "for" => Some(TokenType::For),
+            "fun" => Some(TokenType::Fun),
+            "if" => Some(TokenType::If),
+            "nil" => Some(TokenType::Nil),
+            "or" => Some(TokenType::Or),
+            "print" => Some(TokenType::Print),
+            "return" => Some(TokenType::Return),
+            "super" => Some(TokenType::Super),
+            "this" => Some(TokenType::This),
+            "true" => Some(TokenType::True),
+            "var" => Some(TokenType::Var),
+            "while" => Some(TokenType::While),
+            _ => None,
+        }
     }
 }

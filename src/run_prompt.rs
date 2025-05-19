@@ -8,7 +8,7 @@ pub fn run_prompt() {
 
     loop {
         print!("> ");
-        io::stdout().flush();
+        let _ = io::stdout().flush();
         match stdin.read_line(input) {
             Ok(_) => run::run(input.clone()),
             Err(_) => break,
