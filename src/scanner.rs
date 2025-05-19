@@ -142,11 +142,33 @@ impl Scanner {
         self.add_token(TokenType::String, Some(Box::new(text)));
     }
 
+    fn parse_block_comment(&mut self) {
+        // shed '*'
+        self.advance();
+
+        while !self.is_at_end() && !(self.peek() == '*' && self.peek_next() == '/') {
+            if self.peek() == '/' && self.peek_next() == '*' {
+                self.parse_block_comment();
+            } else {
+                self.advance();
+            }
+        }
+
+        if !self.is_at_end() {
+            // shed '*'
+            self.advance();
+            // shed '/'
+            self.advance();
+        }
+    }
+
     fn parse_slash(&mut self) {
         if self.match_next('/') {
             while !self.is_at_end() && self.peek() != '\n' {
                 self.advance();
             }
+        } else if self.match_next('*') {
+            self.parse_block_comment();
         } else {
             self.add_basic_token(TokenType::Slash)
         }
