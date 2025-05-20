@@ -1,17 +1,17 @@
 use std::{any::Any, collections::HashMap};
 
 use crate::{
-    errors::{self, error},
+    errors,
     token::{Token, TokenType},
 };
 
 pub struct Scanner {
-    source: Vec<char>,
-    tokens: Vec<Token>,
-    start: usize,   // first character in lexeme being scanned
-    current: usize, // current character being scanned
-    line: u32,      // which line in source code we are scanning
-    reserved_keywords: HashMap<&'static str, TokenType>,
+    source: Vec<char>,  // source code as a vector of characters
+    tokens: Vec<Token>, // vector of tokens produced
+    start: usize,       // first character in lexeme being scanned
+    current: usize,     // current character being scanned
+    line: u32,          // which line in source code we are scanning
+    reserved_keywords: HashMap<&'static str, TokenType>, // keywords reserved by Lox
 }
 
 impl Scanner {
@@ -92,7 +92,7 @@ impl Scanner {
                 } else if c.is_alphanumeric() {
                     self.parse_identifier()
                 } else {
-                    error(self.line, String::from("Unexpected character."))
+                    errors::error(self.line, String::from("Unexpected character."))
                 }
             }
         }
