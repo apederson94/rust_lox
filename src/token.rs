@@ -25,7 +25,7 @@ impl ToString for Token {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum TokenType {
     // Single-character tokens
     LeftParen,

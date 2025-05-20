@@ -1,4 +1,4 @@
-use std::any::Any;
+use std::{any::Any, collections::HashMap};
 
 use crate::{
     errors::{self, error},
@@ -11,16 +11,36 @@ pub struct Scanner {
     start: usize,   // first character in lexeme being scanned
     current: usize, // current character being scanned
     line: u32,      // which line in source code we are scanning
+    reserved_keywords: HashMap<&'static str, TokenType>,
 }
 
 impl Scanner {
     pub fn new(source: String) -> Self {
+        let mut reserved: HashMap<&'static str, TokenType> = HashMap::new();
+        reserved.insert("and", TokenType::And);
+        reserved.insert("class", TokenType::Class);
+        reserved.insert("else", TokenType::Else);
+        reserved.insert("false", TokenType::False);
+        reserved.insert("for", TokenType::For);
+        reserved.insert("fun", TokenType::Fun);
+        reserved.insert("if", TokenType::If);
+        reserved.insert("nil", TokenType::Nil);
+        reserved.insert("or", TokenType::Or);
+        reserved.insert("print", TokenType::Print);
+        reserved.insert("return", TokenType::Return);
+        reserved.insert("super", TokenType::Super);
+        reserved.insert("this", TokenType::This);
+        reserved.insert("true", TokenType::True);
+        reserved.insert("var", TokenType::Var);
+        reserved.insert("while", TokenType::While);
+
         Self {
             source: source.chars().collect(),
             tokens: Vec::new(),
             start: 0,
             current: 0,
             line: 1,
+            reserved_keywords: reserved,
         }
     }
 
@@ -58,10 +78,10 @@ impl Scanner {
             '+' => self.add_basic_token(TokenType::Plus),
             ';' => self.add_basic_token(TokenType::Semicolon),
             '*' => self.add_basic_token(TokenType::Star),
-            '!' => self.parse_one_or_two_token(TokenType::Bang, TokenType::BangEqual, '='),
-            '=' => self.parse_one_or_two_token(TokenType::Equal, TokenType::EqualEqual, '='),
-            '<' => self.parse_one_or_two_token(TokenType::Less, TokenType::LessEqual, '='),
-            '>' => self.parse_one_or_two_token(TokenType::Greater, TokenType::GreaterEqual, '='),
+            '!' => self.parse_with_next_char(TokenType::Bang, TokenType::BangEqual, '='),
+            '=' => self.parse_with_next_char(TokenType::Equal, TokenType::EqualEqual, '='),
+            '<' => self.parse_with_next_char(TokenType::Less, TokenType::LessEqual, '='),
+            '>' => self.parse_with_next_char(TokenType::Greater, TokenType::GreaterEqual, '='),
             '/' => self.parse_slash(),
             '"' => self.parse_string(),
             '\n' => self.line += 1,
@@ -87,8 +107,8 @@ impl Scanner {
             .iter()
             .collect::<String>();
 
-        if let Some(which) = self.match_identifier(identifier.as_str()) {
-            self.add_token(which, Some(Box::new(identifier.clone())));
+        if let Some(which) = self.reserved_keywords.get(identifier.as_str()) {
+            self.add_token(*which, Some(Box::new(identifier)));
         } else {
             self.add_token(TokenType::Identifier, Some(Box::new(identifier)));
         }
@@ -190,7 +210,7 @@ impl Scanner {
         }
     }
 
-    fn parse_one_or_two_token(&mut self, default: TokenType, other: TokenType, next_char: char) {
+    fn parse_with_next_char(&mut self, default: TokenType, other: TokenType, next_char: char) {
         let token_type = if self.match_next(next_char) {
             self.advance();
             other
@@ -228,27 +248,5 @@ impl Scanner {
             .collect::<String>();
         self.tokens
             .push(Token::new(which, text, literal, self.line));
-    }
-
-    fn match_identifier(&self, identifier: &str) -> Option<TokenType> {
-        match identifier {
-            "and" => Some(TokenType::And),
-            "class" => Some(TokenType::Class),
-            "else" => Some(TokenType::Else),
-            "false" => Some(TokenType::False),
-            "for" => Some(TokenType::For),
-            "fun" => Some(TokenType::Fun),
-            "if" => Some(TokenType::If),
-            "nil" => Some(TokenType::Nil),
-            "or" => Some(TokenType::Or),
-            "print" => Some(TokenType::Print),
-            "return" => Some(TokenType::Return),
-            "super" => Some(TokenType::Super),
-            "this" => Some(TokenType::This),
-            "true" => Some(TokenType::True),
-            "var" => Some(TokenType::Var),
-            "while" => Some(TokenType::While),
-            _ => None,
-        }
     }
 }
