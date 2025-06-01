@@ -1,7 +1,7 @@
 use crate::expr::Expr;
 use crate::token::TokenType;
 
-trait AstPrinter {
+pub trait AstPrinter {
     fn print(&self) -> String;
 }
 
