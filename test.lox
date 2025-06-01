@@ -3,3 +3,5 @@ test comment
 */
  end tets */
  fun test
+ "this is a string"
+ 42

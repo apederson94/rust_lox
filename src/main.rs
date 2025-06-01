@@ -1,6 +1,8 @@
 use std::env::args;
 
+mod ast_printer;
 mod errors;
+mod expr;
 mod runner;
 mod scanner;
 mod token;

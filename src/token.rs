@@ -1,31 +1,35 @@
-use std::any::Any;
-
 #[derive(Debug)]
 pub struct Token {
     which: TokenType,
     lexeme: String,
-    literal: Option<Box<dyn Any>>,
     line: u32,
 }
 
 impl Token {
-    pub fn new(which: TokenType, lexeme: String, literal: Option<Box<dyn Any>>, line: u32) -> Self {
+    pub fn new(which: TokenType, lexeme: String, line: u32) -> Self {
         Self {
             which,
             lexeme,
-            literal: literal,
             line,
         }
+    }
+
+    pub fn lexeme(&self) -> &str {
+        &self.lexeme
+    }
+
+    pub fn which(&self) -> &TokenType {
+        &self.which
     }
 }
 
 impl ToString for Token {
     fn to_string(&self) -> String {
-        format!("{:?} {} {:?}", self.which, self.lexeme, self.literal)
+        format!("{:?} {}", self.which, self.lexeme)
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum TokenType {
     // Single-character tokens
     LeftParen,
@@ -51,9 +55,9 @@ pub enum TokenType {
     LessEqual,
 
     // Literals
-    Identifier,
-    String,
-    Number,
+    Identifier(String),
+    Str(String),
+    Number(f64),
 
     // Keywords
     And,
@@ -72,5 +76,5 @@ pub enum TokenType {
     True,
     Var,
     While,
-    EndOfFIle,
+    EndOfFile,
 }

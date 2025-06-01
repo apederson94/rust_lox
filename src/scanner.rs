@@ -1,4 +1,4 @@
-use std::{any::Any, collections::HashMap};
+use std::collections::HashMap;
 
 use crate::{
     errors,
@@ -51,9 +51,8 @@ impl Scanner {
         }
 
         self.tokens.push(Token::new(
-            TokenType::EndOfFIle,
+            TokenType::EndOfFile,
             String::from(""),
-            None,
             self.line,
         ));
 
@@ -108,9 +107,9 @@ impl Scanner {
             .collect::<String>();
 
         if let Some(which) = self.reserved_keywords.get(identifier.as_str()) {
-            self.add_token(*which, Some(Box::new(identifier)));
+            self.add_token(which.clone());
         } else {
-            self.add_token(TokenType::Identifier, Some(Box::new(identifier)));
+            self.add_token(TokenType::Identifier(identifier));
         }
     }
 
@@ -133,7 +132,7 @@ impl Scanner {
             .parse::<f64>();
 
         if let Ok(n) = n {
-            self.add_token(TokenType::Number, Some(Box::new(n)));
+            self.add_token(TokenType::Number(n));
         } else {
             errors::error(self.line, String::from("Unable to parse number."));
         }
@@ -159,7 +158,7 @@ impl Scanner {
             .iter()
             .collect::<String>();
 
-        self.add_token(TokenType::String, Some(Box::new(text)));
+        self.add_token(TokenType::Str(text));
     }
 
     fn parse_block_comment(&mut self) {
@@ -239,14 +238,13 @@ impl Scanner {
     }
 
     fn add_basic_token(&mut self, which: TokenType) {
-        self.add_token(which, None);
+        self.add_token(which);
     }
 
-    fn add_token(&mut self, which: TokenType, literal: Option<Box<dyn Any>>) {
+    fn add_token(&mut self, which: TokenType) {
         let text = self.source[self.start..self.current]
             .iter()
             .collect::<String>();
-        self.tokens
-            .push(Token::new(which, text, literal, self.line));
+        self.tokens.push(Token::new(which, text, self.line));
     }
 }
