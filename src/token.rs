@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     which: TokenType,
     lexeme: String,
@@ -29,7 +29,7 @@ impl ToString for Token {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenType {
     // Single-character tokens
     LeftParen,
@@ -78,3 +78,5 @@ pub enum TokenType {
     While,
     EndOfFile,
 }
+
+impl TokenType {}

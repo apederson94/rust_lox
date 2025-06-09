@@ -3,6 +3,7 @@ use std::env::args;
 mod ast_printer;
 mod errors;
 mod expr;
+mod parser;
 mod runner;
 mod scanner;
 mod token;
