@@ -10,7 +10,7 @@ pub enum Expr {
         expression: Box<Expr>,
     },
     Literal {
-        value: Token,
+        value: TokenType,
     },
     Unary {
         operator: Token,
