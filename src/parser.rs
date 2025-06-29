@@ -4,6 +4,11 @@ use crate::{
     token::{Token, TokenType},
 };
 
+struct ParserError {
+    message: String,
+    line: u32,
+}
+
 struct Parser {
     tokens: Vec<Token>,
     current: usize,
@@ -14,20 +19,20 @@ impl Parser {
         Parser { tokens, current: 0 }
     }
 
-    fn expression(&mut self) -> Expr {
+    fn expression(&mut self) -> Result<Expr, ParserError> {
         return self.equality();
     }
 
     fn parse_binary(
         &mut self,
-        mut nxt: impl FnMut(&mut Self) -> Expr,
+        mut nxt: impl FnMut(&mut Self) -> Result<Expr, ParserError>,
         tokens: &[TokenType],
-    ) -> Expr {
-        let mut expr = nxt(self);
+    ) -> Result<Expr, ParserError> {
+        let mut expr = nxt(self)?;
 
         while self.match_tokens(tokens) {
             let operator = self.advance().clone();
-            let right = nxt(self);
+            let right = nxt(self)?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator: operator,
@@ -35,17 +40,17 @@ impl Parser {
             };
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn equality(&mut self) -> Expr {
+    fn equality(&mut self) -> Result<Expr, ParserError> {
         self.parse_binary(
             |s| s.comparison(),
             &[TokenType::BangEqual, TokenType::EqualEqual],
         )
     }
 
-    fn comparison(&mut self) -> Expr {
+    fn comparison(&mut self) -> Result<Expr, ParserError> {
         self.parse_binary(
             |s| s.term(),
             &[
@@ -57,15 +62,15 @@ impl Parser {
         )
     }
 
-    fn term(&mut self) -> Expr {
+    fn term(&mut self) -> Result<Expr, ParserError> {
         self.parse_binary(|s| s.factor(), &[TokenType::Minus, TokenType::Plus])
     }
 
-    fn factor(&mut self) -> Expr {
+    fn factor(&mut self) -> Result<Expr, ParserError> {
         self.parse_binary(|s| s.unary(), &[TokenType::Slash, TokenType::Star])
     }
 
-    fn unary(&mut self) -> Expr {
+    fn unary(&mut self) -> Result<Expr, ParserError> {
         if self.is_at_end() {
             errors::error(self.previous().line(), String::from("Unexpected token"));
         };
@@ -74,17 +79,17 @@ impl Parser {
             TokenType::Bang | TokenType::Minus => {
                 self.advance();
                 let operator = self.previous().clone();
-                let right = self.unary();
-                Expr::Unary {
+                let right = self.unary()?;
+                Ok(Expr::Unary {
                     operator: operator,
                     right: Box::new(right),
-                }
+                })
             }
             _ => self.primary(),
         }
     }
 
-    fn primary(&mut self) -> Expr {
+    fn primary(&mut self) -> Result<Expr, ParserError> {
         if self.is_at_end() {
             errors::error(self.previous().line(), String::from("Unexpected token"));
         }
@@ -92,40 +97,47 @@ impl Parser {
         match self.peek().type_info() {
             TokenType::False => {
                 self.advance();
-                Expr::Literal {
+                Ok(Expr::Literal {
                     value: TokenType::False,
-                }
+                })
             }
             TokenType::True => {
                 self.advance();
-                Expr::Literal {
+                Ok(Expr::Literal {
                     value: TokenType::True,
-                }
+                })
             }
             TokenType::Number(n) => {
                 let num = n.clone();
                 self.advance();
-                Expr::Literal {
+                Ok(Expr::Literal {
                     value: TokenType::Number(num),
-                }
+                })
             }
 
             TokenType::LeftParen => {
                 let expr = self.expression();
                 self.consume(TokenType::RightParen, "Expect ')' after expression.");
-                Expr::Grouping {
-                    expression: Box::new(expr),
-                }
+                Ok(Expr::Grouping {
+                    expression: Box::new(expr?),
+                })
             }
-            _ => errors::error(self.previous().line(), "Unexpected token"),
+            _ => Err(ParserError {
+                message: String::from("Unexpected token!"),
+                line: self.previous().line(),
+            }),
         }
     }
 
-    fn consume(&mut self, token_type: TokenType, message: &str) {
+    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<(), ParserError> {
         if self.check(&token_type) {
             self.advance();
+            Ok(())
         } else {
-            panic!("Unexpected token: {:?}, {}", self.peek(), message)
+            Err(ParserError {
+                message: format!("Unexpected token: {:?}, {}", self.peek(), message),
+                line: self.previous().line(),
+            })
         }
     }
 
