@@ -166,6 +166,9 @@ impl Scanner {
         self.advance();
 
         while !self.is_at_end() && !(self.peek() == '*' && self.peek_next() == '/') {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
             if self.peek() == '/' && self.peek_next() == '*' {
                 self.parse_block_comment();
             } else {
