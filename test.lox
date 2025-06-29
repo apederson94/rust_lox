@@ -3,5 +3,5 @@ test comment
 */
  end tets */
  /* fun test */
- /* "this is a string" *
-42
+ /* "this is a string" */
+42 != 43

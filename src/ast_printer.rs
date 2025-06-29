@@ -20,6 +20,7 @@ impl AstPrinter for Expr {
                 TokenType::Number(num) => format!("{}", num),
                 TokenType::Str(text) => format!("\"{}\"", text),
                 TokenType::Identifier(ident) => format!("{}", ident),
+                TokenType::EndOfFile => String::from("EndOfFile"),
                 _ => format!("Error: Unknown literal type!"),
             },
             Expr::Unary { operator, right } => format!("({} {})", operator.lexeme(), right.print()),

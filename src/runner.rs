@@ -46,7 +46,7 @@ fn run(script: String) {
     }
 
     match expression {
-        Some(expr) => print!("{}", expr.print()),
+        Some(expr) => println!("{}", expr.print()),
         None => (),
     }
 

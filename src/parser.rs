@@ -40,12 +40,13 @@ impl Parser {
     ) -> Result<Expr, ParseError> {
         let mut expr = nxt(self)?;
 
+        let operator = self.peek().clone();
+
         while self.match_tokens(tokens) {
-            let operator = self.advance().clone();
             let right = nxt(self)?;
             expr = Expr::Binary {
                 left: Box::new(expr),
-                operator: operator,
+                operator: operator.clone(),
                 right: Box::new(right),
             };
         }
@@ -81,13 +82,6 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Result<Expr, ParseError> {
-        if self.is_at_end() {
-            errors::error(
-                self.previous().line(),
-                format!("Unexpected token: {}", self.peek().lexeme()),
-            );
-        };
-
         match self.peek().type_info() {
             TokenType::Bang | TokenType::Minus => {
                 self.advance();
@@ -103,13 +97,6 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expr, ParseError> {
-        if self.is_at_end() {
-            return Err(ParseError {
-                message: format!("Unexpected token: {}", self.peek().lexeme()),
-                line: self.peek().line(),
-            });
-        }
-
         match self.peek().type_info() {
             TokenType::False => {
                 self.advance();
@@ -138,8 +125,13 @@ impl Parser {
                     expression: Box::new(expr),
                 })
             }
+
+            TokenType::EndOfFile => Ok(Expr::Literal {
+                value: TokenType::EndOfFile,
+            }),
+
             _ => Err(ParseError {
-                message: format!("Unexpected token: {:?}", self.tokens[self.current]),
+                message: format!("Unexpected token: {:?}.", self.tokens[self.current]),
                 line: self.peek().line(),
             }),
         }
@@ -188,14 +180,14 @@ impl Parser {
 
     fn previous(&self) -> &Token {
         if self.current == 0 {
-            &self.tokens[self.current]
+            &self.tokens[0]
         } else {
             &self.tokens[self.current - 1]
         }
     }
 
     fn is_at_end(&self) -> bool {
-        *self.peek().type_info() != TokenType::EndOfFile
+        *self.peek().type_info() == TokenType::EndOfFile
     }
 
     fn synchronize(&mut self) {
