@@ -16,7 +16,7 @@ impl AstPrinter for Expr {
                 format!("({} {} {})", operator.lexeme(), left.print(), right.print())
             }
             Expr::Grouping { expression } => format!("(group {})", expression.print()),
-            Expr::Literal { value } => match value.which() {
+            Expr::Literal { value } => match value {
                 TokenType::Number(num) => format!("{}", num),
                 TokenType::Str(text) => format!("\"{}\"", text),
                 TokenType::Identifier(ident) => format!("{}", ident),

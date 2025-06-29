@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub struct Token {
-    which: TokenType,
+    token_type: TokenType,
     lexeme: String,
     line: u32,
 }
@@ -8,7 +8,7 @@ pub struct Token {
 impl Token {
     pub fn new(which: TokenType, lexeme: String, line: u32) -> Self {
         Self {
-            which,
+            token_type: which,
             lexeme,
             line,
         }
@@ -18,14 +18,18 @@ impl Token {
         &self.lexeme
     }
 
-    pub fn which(&self) -> &TokenType {
-        &self.which
+    pub fn type_info(&self) -> &TokenType {
+        &self.token_type
+    }
+
+    pub fn line(&self) -> u32 {
+        self.line
     }
 }
 
 impl ToString for Token {
     fn to_string(&self) -> String {
-        format!("{:?} {}", self.which, self.lexeme)
+        format!("{:?} {}", self.token_type, self.lexeme)
     }
 }
 

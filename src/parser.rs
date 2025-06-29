@@ -1,4 +1,5 @@
 use crate::{
+    errors,
     expr::Expr,
     token::{Token, TokenType},
 };
@@ -24,7 +25,7 @@ impl Parser {
     ) -> Expr {
         let mut expr = nxt(self);
 
-        while self.match_tokens(tokens)) {
+        while self.match_tokens(tokens) {
             let operator = self.advance().clone();
             let right = nxt(self);
             expr = Expr::Binary {
@@ -66,10 +67,10 @@ impl Parser {
 
     fn unary(&mut self) -> Expr {
         if self.is_at_end() {
-            panic!("Unexpected token");
+            errors::error(self.previous().line(), String::from("Unexpected token"));
         };
 
-        match self.peek().which() {
+        match self.peek().type_info() {
             TokenType::Bang | TokenType::Minus => {
                 self.advance();
                 let operator = self.previous().clone();
@@ -85,10 +86,10 @@ impl Parser {
 
     fn primary(&mut self) -> Expr {
         if self.is_at_end() {
-            panic!("Unexpected token");
+            errors::error(self.previous().line(), String::from("Unexpected token"));
         }
 
-        match self.peek().which() {
+        match self.peek().type_info() {
             TokenType::False => {
                 self.advance();
                 Expr::Literal {
@@ -102,9 +103,10 @@ impl Parser {
                 }
             }
             TokenType::Number(n) => {
+                let num = n.clone();
                 self.advance();
                 Expr::Literal {
-                    value: TokenType::Number(*n),
+                    value: TokenType::Number(num),
                 }
             }
 
@@ -115,7 +117,15 @@ impl Parser {
                     expression: Box::new(expr),
                 }
             }
-            _ => panic!("Unexpected token"),
+            _ => errors::error(self.previous().line(), "Unexpected token"),
+        }
+    }
+
+    fn consume(&mut self, token_type: TokenType, message: &str) {
+        if self.check(&token_type) {
+            self.advance();
+        } else {
+            panic!("Unexpected token: {:?}, {}", self.peek(), message)
         }
     }
 
@@ -133,7 +143,7 @@ impl Parser {
         if self.is_at_end() {
             false
         } else {
-            self.peek().which() == token_type
+            self.peek().type_info() == token_type
         }
     }
 
@@ -153,6 +163,6 @@ impl Parser {
     }
 
     fn is_at_end(&self) -> bool {
-        *self.peek().which() != TokenType::EndOfFile
+        *self.peek().type_info() != TokenType::EndOfFile
     }
 }
