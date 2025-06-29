@@ -5,7 +5,10 @@ use std::{
     process,
 };
 
-use crate::{errors, scanner};
+use crate::{
+    ast_printer::{self, AstPrinter},
+    errors, parser, scanner,
+};
 
 pub fn run_file(path: String) -> Result<(), RunnerError> {
     let data = fs::read_to_string(path);
@@ -35,9 +38,16 @@ pub fn run_prompt() {
 fn run(script: String) {
     let mut scanner = scanner::Scanner::new(script);
     let tokens = scanner.scan_tokens();
+    let mut parser = parser::Parser::new(tokens.clone());
+    let expression = parser.parse();
 
     if errors::had_error() {
         process::exit(65);
+    }
+
+    match expression {
+        Some(expr) => print!("{}", expr.print()),
+        None => (),
     }
 
     tokens.iter().for_each(|t| println!("{:?}", t));

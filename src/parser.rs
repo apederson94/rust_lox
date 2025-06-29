@@ -4,12 +4,12 @@ use crate::{
     token::{Token, TokenType},
 };
 
-struct ParserError {
+struct ParseError {
     message: String,
     line: u32,
 }
 
-struct Parser {
+pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
 }
@@ -19,15 +19,25 @@ impl Parser {
         Parser { tokens, current: 0 }
     }
 
-    fn expression(&mut self) -> Result<Expr, ParserError> {
+    pub fn parse(&mut self) -> Option<Expr> {
+        match self.expression() {
+            Ok(expr) => Some(expr),
+            Err(err) => {
+                errors::error(err.line, err.message);
+                None
+            }
+        }
+    }
+
+    fn expression(&mut self) -> Result<Expr, ParseError> {
         return self.equality();
     }
 
     fn parse_binary(
         &mut self,
-        mut nxt: impl FnMut(&mut Self) -> Result<Expr, ParserError>,
+        mut nxt: impl FnMut(&mut Self) -> Result<Expr, ParseError>,
         tokens: &[TokenType],
-    ) -> Result<Expr, ParserError> {
+    ) -> Result<Expr, ParseError> {
         let mut expr = nxt(self)?;
 
         while self.match_tokens(tokens) {
@@ -43,14 +53,14 @@ impl Parser {
         Ok(expr)
     }
 
-    fn equality(&mut self) -> Result<Expr, ParserError> {
+    fn equality(&mut self) -> Result<Expr, ParseError> {
         self.parse_binary(
             |s| s.comparison(),
             &[TokenType::BangEqual, TokenType::EqualEqual],
         )
     }
 
-    fn comparison(&mut self) -> Result<Expr, ParserError> {
+    fn comparison(&mut self) -> Result<Expr, ParseError> {
         self.parse_binary(
             |s| s.term(),
             &[
@@ -62,17 +72,20 @@ impl Parser {
         )
     }
 
-    fn term(&mut self) -> Result<Expr, ParserError> {
+    fn term(&mut self) -> Result<Expr, ParseError> {
         self.parse_binary(|s| s.factor(), &[TokenType::Minus, TokenType::Plus])
     }
 
-    fn factor(&mut self) -> Result<Expr, ParserError> {
+    fn factor(&mut self) -> Result<Expr, ParseError> {
         self.parse_binary(|s| s.unary(), &[TokenType::Slash, TokenType::Star])
     }
 
-    fn unary(&mut self) -> Result<Expr, ParserError> {
+    fn unary(&mut self) -> Result<Expr, ParseError> {
         if self.is_at_end() {
-            errors::error(self.previous().line(), String::from("Unexpected token"));
+            errors::error(
+                self.previous().line(),
+                format!("Unexpected token: {}", self.peek().lexeme()),
+            );
         };
 
         match self.peek().type_info() {
@@ -89,9 +102,12 @@ impl Parser {
         }
     }
 
-    fn primary(&mut self) -> Result<Expr, ParserError> {
+    fn primary(&mut self) -> Result<Expr, ParseError> {
         if self.is_at_end() {
-            errors::error(self.previous().line(), String::from("Unexpected token"));
+            return Err(ParseError {
+                message: format!("Unexpected token: {}", self.peek().lexeme()),
+                line: self.peek().line(),
+            });
         }
 
         match self.peek().type_info() {
@@ -116,26 +132,26 @@ impl Parser {
             }
 
             TokenType::LeftParen => {
-                let expr = self.expression();
-                self.consume(TokenType::RightParen, "Expect ')' after expression.");
+                let expr = self.expression()?;
+                self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
                 Ok(Expr::Grouping {
-                    expression: Box::new(expr?),
+                    expression: Box::new(expr),
                 })
             }
-            _ => Err(ParserError {
-                message: String::from("Unexpected token!"),
-                line: self.previous().line(),
+            _ => Err(ParseError {
+                message: format!("Unexpected token: {:?}", self.tokens[self.current]),
+                line: self.peek().line(),
             }),
         }
     }
 
-    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<(), ParserError> {
+    fn consume(&mut self, token_type: TokenType, message: &str) -> Result<(), ParseError> {
         if self.check(&token_type) {
             self.advance();
             Ok(())
         } else {
-            Err(ParserError {
-                message: format!("Unexpected token: {:?}, {}", self.peek(), message),
+            Err(ParseError {
+                message: format!("Unexpected token: {}.", message),
                 line: self.previous().line(),
             })
         }
@@ -171,10 +187,37 @@ impl Parser {
     }
 
     fn previous(&self) -> &Token {
-        &self.tokens[self.current - 1]
+        if self.current == 0 {
+            &self.tokens[self.current]
+        } else {
+            &self.tokens[self.current - 1]
+        }
     }
 
     fn is_at_end(&self) -> bool {
         *self.peek().type_info() != TokenType::EndOfFile
+    }
+
+    fn synchronize(&mut self) {
+        self.advance();
+
+        while !self.is_at_end() {
+            if *self.previous().type_info() == TokenType::Semicolon {
+                return;
+            }
+
+            match self.peek().type_info() {
+                TokenType::Class
+                | TokenType::Fun
+                | TokenType::Var
+                | TokenType::For
+                | TokenType::If
+                | TokenType::While
+                | TokenType::Print
+                | TokenType::Return => return,
+                _ => {}
+            }
+            self.advance();
+        }
     }
 }
