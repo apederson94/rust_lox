@@ -5,10 +5,7 @@ use std::{
     process,
 };
 
-use crate::{
-    ast_printer::{self, AstPrinter},
-    errors, parser, scanner,
-};
+use crate::{ast_printer::AstPrinter, errors, parser, scanner};
 
 pub fn run_file(path: String) -> Result<(), RunnerError> {
     let data = fs::read_to_string(path);

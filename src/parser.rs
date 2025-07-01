@@ -40,9 +40,8 @@ impl Parser {
     ) -> Result<Expr, ParseError> {
         let mut expr = nxt(self)?;
 
-        let operator = self.peek().clone();
-
         while self.match_tokens(tokens) {
+            let operator = self.previous().clone();
             let right = nxt(self)?;
             expr = Expr::Binary {
                 left: Box::new(expr),
