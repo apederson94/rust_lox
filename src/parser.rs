@@ -141,6 +141,14 @@ impl Parser {
                 })
             }
 
+            TokenType::Str(s) => {
+                let str_value = s.clone();
+                self.advance();
+                Ok(Expr::Literal {
+                    value: TokenType::Str(str_value),
+                })
+            }
+
             TokenType::LeftParen => {
                 let expr = self.expression()?;
                 self.consume(TokenType::RightParen, "Expect ')' after expression.")?;

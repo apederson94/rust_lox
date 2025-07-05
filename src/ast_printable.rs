@@ -1,11 +1,11 @@
 use crate::expr::Expr;
 use crate::token::TokenType;
 
-pub trait AstPrinter {
+pub trait ASTPrintable {
     fn print(&self) -> String;
 }
 
-impl AstPrinter for Expr {
+impl ASTPrintable for Expr {
     fn print(&self) -> String {
         match self {
             Expr::Binary {
