@@ -23,6 +23,18 @@ impl AstPrinter for Expr {
                 TokenType::EndOfFile => String::from("EndOfFile"),
                 _ => format!("Error: Unknown literal type!"),
             },
+            Expr::Conditional {
+                condition,
+                consequent,
+                alternative,
+            } => {
+                format!(
+                    "(if {} {} else {})",
+                    condition.print(),
+                    consequent.print(),
+                    alternative.print()
+                )
+            }
             Expr::Unary { operator, right } => format!("({} {})", operator.lexeme(), right.print()),
         }
     }

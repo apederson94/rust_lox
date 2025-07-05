@@ -57,6 +57,8 @@ pub enum TokenType {
     GreaterEqual,
     Less,
     LessEqual,
+    QuestionMark,
+    Colon,
 
     // Literals
     Identifier(String),

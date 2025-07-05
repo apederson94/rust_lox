@@ -34,7 +34,7 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr, ParseError> {
-        return self.equality();
+        return self.conditional();
     }
 
     fn parse_binary(
@@ -55,6 +55,26 @@ impl Parser {
         }
 
         Ok(expr)
+    }
+
+    fn conditional(&mut self) -> Result<Expr, ParseError> {
+        let equality_expr = self.equality();
+
+        if self.match_tokens(&[TokenType::QuestionMark]) {
+            let consequent = self.expression()?;
+
+            if self.match_tokens(&[TokenType::Colon]) {
+                let alternative = self.expression()?;
+
+                return Ok(Expr::Conditional {
+                    condition: Box::new(equality_expr?),
+                    consequent: Box::new(consequent),
+                    alternative: Box::new(alternative),
+                });
+            }
+        }
+
+        equality_expr
     }
 
     fn equality(&mut self) -> Result<Expr, ParseError> {

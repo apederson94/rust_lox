@@ -77,6 +77,8 @@ impl Scanner {
             '+' => self.add_basic_token(TokenType::Plus),
             ';' => self.add_basic_token(TokenType::Semicolon),
             '*' => self.add_basic_token(TokenType::Star),
+            '?' => self.add_basic_token(TokenType::QuestionMark),
+            ':' => self.add_basic_token(TokenType::Colon),
             '!' => self.parse_with_next_char(TokenType::Bang, TokenType::BangEqual, '='),
             '=' => self.parse_with_next_char(TokenType::Equal, TokenType::EqualEqual, '='),
             '<' => self.parse_with_next_char(TokenType::Less, TokenType::LessEqual, '='),

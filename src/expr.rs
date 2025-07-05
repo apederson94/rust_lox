@@ -7,6 +7,11 @@ pub enum Expr {
         operator: Token,
         right: Box<Expr>,
     },
+    Conditional {
+        condition: Box<Expr>,
+        consequent: Box<Expr>,
+        alternative: Box<Expr>,
+    },
     Grouping {
         expression: Box<Expr>,
     },
