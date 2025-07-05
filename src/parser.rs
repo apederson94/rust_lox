@@ -20,13 +20,17 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Option<Expr> {
-        match self.expression() {
+        match self.expression_list() {
             Ok(expr) => Some(expr),
             Err(err) => {
                 errors::error(err.line, err.message);
                 None
             }
         }
+    }
+
+    fn expression_list(&mut self) -> Result<Expr, ParseError> {
+        return self.parse_binary(|s| s.expression(), &[TokenType::Comma]);
     }
 
     fn expression(&mut self) -> Result<Expr, ParseError> {
