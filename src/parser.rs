@@ -124,20 +124,20 @@ impl Parser {
             TokenType::False => {
                 self.advance();
                 Ok(Expr::Literal {
-                    value: TokenType::False,
+                    value: self.previous().clone(),
                 })
             }
             TokenType::True => {
                 self.advance();
                 Ok(Expr::Literal {
-                    value: TokenType::True,
+                    value: self.previous().clone(),
                 })
             }
             TokenType::Number(n) => {
                 let num = n.clone();
                 self.advance();
                 Ok(Expr::Literal {
-                    value: TokenType::Number(num),
+                    value: self.previous().clone(),
                 })
             }
 
@@ -145,7 +145,7 @@ impl Parser {
                 let str_value = s.clone();
                 self.advance();
                 Ok(Expr::Literal {
-                    value: TokenType::Str(str_value),
+                    value: self.previous().clone(),
                 })
             }
 
@@ -158,7 +158,7 @@ impl Parser {
             }
 
             TokenType::EndOfFile => Ok(Expr::Literal {
-                value: TokenType::EndOfFile,
+                value: self.peek().clone(),
             }),
 
             _ => Err(ParseError {
