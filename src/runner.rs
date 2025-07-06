@@ -5,7 +5,7 @@ use std::{
     process,
 };
 
-use crate::{ast_printable::ASTPrintable, errors, parser, scanner};
+use crate::{ast_printable::ASTPrintable, errors, interpretable::Interpretable, parser, scanner};
 
 pub fn run_file(path: String) -> Result<(), RunnerError> {
     let data = fs::read_to_string(path);
@@ -43,7 +43,13 @@ fn run(script: String) {
     }
 
     match expression {
-        Some(expr) => println!("{}", expr.print()),
+        Some(expr) => {
+            println!("{}", expr.print());
+            match expr.interpret() {
+                Ok(value) => println!("{:?}", value),
+                Err(err) => println!("{}", err),
+            }
+        }
         None => (),
     }
 

@@ -142,7 +142,6 @@ impl Parser {
             }
 
             TokenType::Str(s) => {
-                let str_value = s.clone();
                 self.advance();
                 Ok(Expr::Literal {
                     value: self.previous().clone(),
@@ -154,6 +153,13 @@ impl Parser {
                 self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
                 Ok(Expr::Grouping {
                     expression: Box::new(expr),
+                })
+            }
+
+            TokenType::Nil => {
+                self.advance();
+                Ok(Expr::Literal {
+                    value: self.previous().clone(),
                 })
             }
 

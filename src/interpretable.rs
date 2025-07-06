@@ -1,14 +1,21 @@
-use std::fmt::{format, Display};
+use std::fmt::Display;
 
-use crate::{
-    errors,
-    expr::Expr,
-    lox_value::LoxValue,
-    token::{Token, TokenType},
-};
+use crate::{errors, expr::Expr, lox_value::LoxValue, token::TokenType};
 
 pub trait Interpretable {
     fn interpret(&self) -> Result<LoxValue, RuntimeError>;
+}
+
+impl Interpretable for Expr {
+    fn interpret(&self) -> Result<LoxValue, RuntimeError> {
+        match evaluate(self) {
+            Ok(value) => Ok(value),
+            Err(err) => {
+                errors::error(0, format!("{}", err));
+                Err(err)
+            }
+        }
+    }
 }
 
 fn evaluate(expr: &Expr) -> Result<LoxValue, RuntimeError> {
@@ -18,6 +25,7 @@ fn evaluate(expr: &Expr) -> Result<LoxValue, RuntimeError> {
             TokenType::Str(s) => Ok(LoxValue::Str(s.clone())),
             TokenType::True => Ok(LoxValue::Bool(true)),
             TokenType::False => Ok(LoxValue::Bool(false)),
+            TokenType::Nil => Ok(LoxValue::Nil),
             TokenType::EndOfFile => Ok(LoxValue::Nil),
             _ => Err(RuntimeError::new(
                 value.line(),
@@ -143,6 +151,7 @@ fn evaluate(expr: &Expr) -> Result<LoxValue, RuntimeError> {
                     (LoxValue::Number(n1), LoxValue::Number(n2)) => Ok(LoxValue::Bool(n1 == n2)),
                     (LoxValue::Str(s1), LoxValue::Str(s2)) => Ok(LoxValue::Bool(s1 == s2)),
                     (LoxValue::Bool(b1), LoxValue::Bool(b2)) => Ok(LoxValue::Bool(b1 == b2)),
+                    (LoxValue::Nil, LoxValue::Nil) => Ok(LoxValue::Bool(true)),
                     _ => Ok(LoxValue::Bool(false)),
                 },
 
@@ -150,10 +159,13 @@ fn evaluate(expr: &Expr) -> Result<LoxValue, RuntimeError> {
                     (LoxValue::Number(n1), LoxValue::Number(n2)) => Ok(LoxValue::Bool(n1 != n2)),
                     (LoxValue::Str(s1), LoxValue::Str(s2)) => Ok(LoxValue::Bool(s1 != s2)),
                     (LoxValue::Bool(b1), LoxValue::Bool(b2)) => Ok(LoxValue::Bool(b1 != b2)),
-                    (LoxValue::Nil, LoxValue::Nil) => Ok(LoxValue::Bool(true)),
                     _ => Ok(LoxValue::Bool(true)),
                 },
 
+                TokenType::Comma => {
+                    // don't do much here except ignore the first half after evaulating it
+                    Ok(right_value)
+                }
                 _ => Err(RuntimeError::new(
                     operator.line(),
                     String::from(operator.lexeme()),
@@ -165,21 +177,10 @@ fn evaluate(expr: &Expr) -> Result<LoxValue, RuntimeError> {
             condition,
             consequent,
             alternative,
-        } => {
-            panic!("Conditional expression not implemented")
-        }
-    }
-}
-
-impl Interpretable for Expr {
-    fn interpret(&self) -> Result<LoxValue, RuntimeError> {
-        match evaluate(self) {
-            Ok(value) => Ok(value),
-            Err(err) => {
-                errors::error(0, format!("{}", err));
-                Err(err)
-            }
-        }
+        } => match condition.interpret()? {
+            LoxValue::Bool(false) | LoxValue::Nil => alternative.interpret(),
+            _ => consequent.interpret(),
+        },
     }
 }
 

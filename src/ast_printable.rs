@@ -16,10 +16,11 @@ impl ASTPrintable for Expr {
                 format!("({} {} {})", operator.lexeme(), left.print(), right.print())
             }
             Expr::Grouping { expression } => format!("(group {})", expression.print()),
-            Expr::Literal { value } => match value {
+            Expr::Literal { value } => match value.type_info() {
                 TokenType::Number(num) => format!("{}", num),
                 TokenType::Str(text) => format!("\"{}\"", text),
                 TokenType::Identifier(ident) => format!("{}", ident),
+                TokenType::Nil => String::from("nil"),
                 TokenType::EndOfFile => String::from("EndOfFile"),
                 _ => format!("Error: Unknown literal type!"),
             },
