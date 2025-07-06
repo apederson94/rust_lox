@@ -1,32 +1,7 @@
-use std::boxed;
-
 use crate::{expr::Expr, lox_value::LoxValue, token::TokenType};
 
 pub trait Interpretable {
     fn interpret(&self) -> Result<LoxValue, InterpretationError>;
-}
-
-impl Expr {
-    fn get_number(&self, value: &LoxValue) -> Result<f64, InterpretationError> {
-        match value {
-            LoxValue::Number(n) => Ok(*n),
-            _ => Err(InterpretationError::new(self)),
-        }
-    }
-
-    fn get_str(&self, value: &LoxValue) -> Result<String, InterpretationError> {
-        match value {
-            LoxValue::Str(s) => Ok(s.clone()),
-            _ => Err(InterpretationError::new(self)),
-        }
-    }
-
-    fn get_bool(&self, value: &LoxValue) -> Result<bool, InterpretationError> {
-        match value {
-            LoxValue::Bool(b) => Ok(*b),
-            _ => Err(InterpretationError::new(self)),
-        }
-    }
 }
 
 impl Interpretable for Expr {
@@ -71,68 +46,60 @@ impl Interpretable for Expr {
                 let right_value = right.interpret()?;
 
                 match operator.type_info() {
-                    TokenType::Minus => {
-                        let n1 = self.get_number(&left_value)?;
-                        let n2 = self.get_number(&right_value)?;
-                        Ok(LoxValue::Number(n1 - n2))
-                    }
-
-                    TokenType::Plus => {
-                        // Addition of numbers
-                        if let Ok(n1) = self.get_number(&left_value) {
-                            match right_value {
-                                LoxValue::Number(n2) => Ok(LoxValue::Number(n1 + n2)),
-                                _ => Err(InterpretationError::new(self)),
-                            }
-
-                        // String concat
-                        } else {
-                            if let Ok(s1) = self.get_str(&left_value) {
-                                match right_value {
-                                    LoxValue::Str(s2) => Ok(LoxValue::Str(format!("{}{}", s1, s2))),
-                                    _ => Err(InterpretationError::new(self)),
-                                }
-                            } else {
-                                Err(InterpretationError::new(self))
-                            }
+                    TokenType::Minus => match (left_value, right_value) {
+                        (LoxValue::Number(n1), LoxValue::Number(n2)) => {
+                            Ok(LoxValue::Number(n1 - n2))
                         }
-                    }
+                        _ => Err(InterpretationError::new(self)),
+                    },
 
-                    TokenType::Slash => {
-                        let n1 = self.get_number(&left_value)?;
-                        let n2 = self.get_number(&right_value)?;
-                        Ok(LoxValue::Number(n1 / n2))
-                    }
+                    TokenType::Plus => match (left_value, right_value) {
+                        (LoxValue::Number(n1), LoxValue::Number(n2)) => {
+                            Ok(LoxValue::Number(n1 + n2))
+                        }
+                        (LoxValue::Str(s1), LoxValue::Str(s2)) => {
+                            Ok(LoxValue::Str(format!("{}{}", s1, s2)))
+                        }
+                        _ => Err(InterpretationError::new(self)),
+                    },
 
-                    TokenType::Star => {
-                        let n1 = self.get_number(&left_value)?;
-                        let n2 = self.get_number(&right_value)?;
-                        Ok(LoxValue::Number(n1 * n2))
-                    }
+                    TokenType::Slash => match (left_value, right_value) {
+                        (LoxValue::Number(n1), LoxValue::Number(n2)) => {
+                            Ok(LoxValue::Number(n1 / n2))
+                        }
+                        _ => Err(InterpretationError::new(self)),
+                    },
 
-                    TokenType::Greater => {
-                        let n1 = self.get_number(&left_value)?;
-                        let n2 = self.get_number(&right_value)?;
-                        Ok(LoxValue::Bool(n1 > n2))
-                    }
+                    TokenType::Star => match (left_value, right_value) {
+                        (LoxValue::Number(n1), LoxValue::Number(n2)) => {
+                            Ok(LoxValue::Number(n1 * n2))
+                        }
+                        _ => Err(InterpretationError::new(self)),
+                    },
 
-                    TokenType::GreaterEqual => {
-                        let n1 = self.get_number(&left_value)?;
-                        let n2 = self.get_number(&right_value)?;
-                        Ok(LoxValue::Bool(n1 >= n2))
-                    }
+                    TokenType::Greater => match (left_value, right_value) {
+                        (LoxValue::Number(n1), LoxValue::Number(n2)) => Ok(LoxValue::Bool(n1 > n2)),
+                        _ => Err(InterpretationError::new(self)),
+                    },
 
-                    TokenType::Less => {
-                        let n1 = self.get_number(&left_value)?;
-                        let n2 = self.get_number(&right_value)?;
-                        Ok(LoxValue::Bool(n1 < n2))
-                    }
+                    TokenType::GreaterEqual => match (left_value, right_value) {
+                        (LoxValue::Number(n1), LoxValue::Number(n2)) => {
+                            Ok(LoxValue::Bool(n1 >= n2))
+                        }
+                        _ => Err(InterpretationError::new(self)),
+                    },
 
-                    TokenType::LessEqual => {
-                        let n1 = self.get_number(&left_value)?;
-                        let n2 = self.get_number(&right_value)?;
-                        Ok(LoxValue::Bool(n1 <= n2))
-                    }
+                    TokenType::Less => match (left_value, right_value) {
+                        (LoxValue::Number(n1), LoxValue::Number(n2)) => Ok(LoxValue::Bool(n1 < n2)),
+                        _ => Err(InterpretationError::new(self)),
+                    },
+
+                    TokenType::LessEqual => match (left_value, right_value) {
+                        (LoxValue::Number(n1), LoxValue::Number(n2)) => {
+                            Ok(LoxValue::Bool(n1 <= n2))
+                        }
+                        _ => Err(InterpretationError::new(self)),
+                    },
 
                     TokenType::EqualEqual => match (left_value, right_value) {
                         (LoxValue::Number(n1), LoxValue::Number(n2)) => {
