@@ -133,15 +133,14 @@ impl Parser {
                     value: self.previous().clone(),
                 })
             }
-            TokenType::Number(n) => {
-                let num = n.clone();
+            TokenType::Number(_) => {
                 self.advance();
                 Ok(Expr::Literal {
                     value: self.previous().clone(),
                 })
             }
 
-            TokenType::Str(s) => {
+            TokenType::Str(_) => {
                 self.advance();
                 Ok(Expr::Literal {
                     value: self.previous().clone(),

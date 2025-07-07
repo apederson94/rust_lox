@@ -1,6 +1,9 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use crate::interpretable::RuntimeError;
+
 static HAD_ERROR: AtomicBool = AtomicBool::new(false);
+static HAD_RUNTIME_ERROR: AtomicBool = AtomicBool::new(false);
 
 pub fn had_error() -> bool {
     let value = HAD_ERROR.load(Ordering::Relaxed);
@@ -8,10 +11,11 @@ pub fn had_error() -> bool {
 }
 
 pub fn error(line: u32, msg: String) {
-    report(line, String::from(""), msg)
+    println!("[line {}] Error: {}", line, msg);
+    HAD_ERROR.store(true, Ordering::Relaxed);
 }
 
-fn report(line: u32, location: String, msg: String) {
-    println!("[line {}] Error {}: {}", line, location, msg);
-    HAD_ERROR.store(true, Ordering::Relaxed);
+pub fn runtime_error(err: &RuntimeError) {
+    eprintln!("{}", err);
+    HAD_RUNTIME_ERROR.store(true, Ordering::Relaxed);
 }

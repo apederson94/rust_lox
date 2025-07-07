@@ -47,7 +47,7 @@ fn run(script: String) {
             println!("{}", expr.print());
             match expr.interpret() {
                 Ok(value) => println!("{:?}", value),
-                Err(err) => println!("{}", err),
+                Err(err) => errors::runtime_error(&err),
             }
         }
         None => (),

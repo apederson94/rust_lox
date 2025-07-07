@@ -11,7 +11,7 @@ impl Interpretable for Expr {
         match evaluate(self) {
             Ok(value) => Ok(value),
             Err(err) => {
-                errors::error(0, format!("{}", err));
+                errors::runtime_error(&err);
                 Err(err)
             }
         }
@@ -206,7 +206,6 @@ pub enum RuntimeErrorType {
     InvalidLiteral,
     InvalidUnaryOperator,
     InvalidBinaryOperator,
-    InvalidExpression,
 }
 
 impl Display for RuntimeError {
@@ -240,13 +239,6 @@ impl Display for RuntimeError {
                 write!(
                     f,
                     "[line {}]: Invalid binary operator: {:?}",
-                    self.line, self.cause
-                )
-            }
-            RuntimeErrorType::InvalidExpression => {
-                write!(
-                    f,
-                    "[line {}]: Invalid expression: {:?}",
                     self.line, self.cause
                 )
             }
