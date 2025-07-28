@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use errors::{RuntimeError, RuntimeErrorType};
 
 use crate::{errors, expr::Expr, lox_value::LoxValue, token::TokenType};
 
@@ -10,10 +10,7 @@ impl Interpretable for Expr {
     fn interpret(&self) -> Result<LoxValue, RuntimeError> {
         match evaluate(self) {
             Ok(value) => Ok(value),
-            Err(err) => {
-                errors::runtime_error(&err);
-                Err(err)
-            }
+            Err(err) => Err(err),
         }
     }
 }
@@ -94,7 +91,17 @@ fn evaluate(expr: &Expr) -> Result<LoxValue, RuntimeError> {
                 },
 
                 TokenType::Slash => match (left_value, right_value) {
-                    (LoxValue::Number(n1), LoxValue::Number(n2)) => Ok(LoxValue::Number(n1 / n2)),
+                    (LoxValue::Number(n1), LoxValue::Number(n2)) => {
+                        if n2 == 0.0 {
+                            Err(RuntimeError::new(
+                                operator.line(),
+                                String::from(operator.lexeme()),
+                                RuntimeErrorType::DivideByZero,
+                            ))
+                        } else {
+                            Ok(LoxValue::Number(n1 / n2))
+                        }
+                    }
                     _ => Err(RuntimeError::new(
                         operator.line(),
                         String::from(operator.lexeme()),
@@ -181,67 +188,5 @@ fn evaluate(expr: &Expr) -> Result<LoxValue, RuntimeError> {
             LoxValue::Bool(false) | LoxValue::Nil => alternative.interpret(),
             _ => consequent.interpret(),
         },
-    }
-}
-
-pub struct RuntimeError {
-    line: u32,
-    cause: String,
-    error_type: RuntimeErrorType,
-}
-
-impl RuntimeError {
-    pub fn new(line: u32, cause: String, error_type: RuntimeErrorType) -> Self {
-        Self {
-            line,
-            cause,
-            error_type,
-        }
-    }
-}
-
-pub enum RuntimeErrorType {
-    OperandMustBeNumber,
-    OperandMustBeNumberOrString,
-    InvalidLiteral,
-    InvalidUnaryOperator,
-    InvalidBinaryOperator,
-}
-
-impl Display for RuntimeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.error_type {
-            RuntimeErrorType::OperandMustBeNumber => {
-                write!(
-                    f,
-                    "[line {}]: Operand must be a number: {}",
-                    self.line, self.cause
-                )
-            }
-            RuntimeErrorType::OperandMustBeNumberOrString => {
-                write!(
-                    f,
-                    "[line {}]: Operands must both be either numbers or strings: {}",
-                    self.line, self.cause
-                )
-            }
-            RuntimeErrorType::InvalidLiteral => {
-                write!(f, "[line {}]: Invalid literal: {:?}", self.line, self.cause)
-            }
-            RuntimeErrorType::InvalidUnaryOperator => {
-                write!(
-                    f,
-                    "[line {}]: Invalid unary operator: {:?}",
-                    self.line, self.cause
-                )
-            }
-            RuntimeErrorType::InvalidBinaryOperator => {
-                write!(
-                    f,
-                    "[line {}]: Invalid binary operator: {:?}",
-                    self.line, self.cause
-                )
-            }
-        }
     }
 }

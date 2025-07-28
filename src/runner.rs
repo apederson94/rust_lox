@@ -41,6 +41,9 @@ fn run(script: String) {
     if errors::had_error() {
         process::exit(65);
     }
+    if errors::had_runtime_error() {
+        process::exit(70);
+    }
 
     match expression {
         Some(expr) => {
@@ -52,8 +55,6 @@ fn run(script: String) {
         }
         None => (),
     }
-
-    tokens.iter().for_each(|t| println!("{:?}", t));
 }
 
 pub enum RunnerError {
