@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Debug, Clone)]
 pub struct Token {
     token_type: TokenType,
@@ -24,12 +26,6 @@ impl Token {
 
     pub fn line(&self) -> u32 {
         self.line
-    }
-}
-
-impl ToString for Token {
-    fn to_string(&self) -> String {
-        format!("{:?} {}", self.token_type, self.lexeme)
     }
 }
 
@@ -85,4 +81,12 @@ pub enum TokenType {
     EndOfFile,
 }
 
-impl TokenType {}
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let msg = match self.token_type {
+            TokenType::EndOfFile => "EndOfFile",
+            _ => self.lexeme(),
+        };
+        write!(f, "{}", msg)
+    }
+}

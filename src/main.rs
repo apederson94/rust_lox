@@ -8,6 +8,7 @@ mod lox_value;
 mod parser;
 mod runner;
 mod scanner;
+mod stmt;
 mod token;
 
 fn main() {

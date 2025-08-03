@@ -1,6 +1,7 @@
 use crate::{
     errors,
     expr::Expr,
+    stmt::Stmt,
     token::{Token, TokenType},
 };
 
@@ -19,14 +20,46 @@ impl Parser {
         Parser { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Option<Expr> {
-        match self.expression_list() {
-            Ok(expr) => Some(expr),
-            Err(err) => {
-                errors::error(err.line, err.message);
-                None
-            }
+    pub fn parse(&mut self) -> Option<Vec<Stmt>> {
+        let mut statements: Vec<Stmt> = vec![];
+        while !self.is_at_end() {
+            statements.append(self.statement());
         }
+        // old code
+        // match self.expression_list() {
+        //     Ok(expr) => Some(expr),
+        //     Err(err) => {
+        //         errors::error(err.line, err.message);
+        //         None
+        //     }
+        // }
+        return Some(statements);
+    }
+
+    fn statement(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_tokens(&[TokenType::Print]) {
+            self.print_statement()
+        } else {
+            self.expression_statement()
+        }
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt, ParseError> {
+        let value = self.expression();
+        self.consume(TokenType::Semicolon, "Expect ';' after value");
+        return match value {
+            Ok(e) => Ok(Stmt::Print(e)),
+            Err(e) => Err(e),
+        };
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
+        let expression = self.expression();
+        self.consume(TokenType::Semicolon, "Expect ';' after expression");
+        return match expression {
+            Ok(e) => Ok(Stmt::Expression(e)),
+            Err(e) => Err(e),
+        };
     }
 
     fn expression_list(&mut self) -> Result<Expr, ParseError> {
@@ -167,7 +200,7 @@ impl Parser {
             }),
 
             _ => Err(ParseError {
-                message: format!("Unexpected token: {:?}.", self.tokens[self.current]),
+                message: format!("Unexpected token: {}.", self.tokens[self.current]),
                 line: self.peek().line(),
             }),
         }

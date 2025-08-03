@@ -17,7 +17,6 @@ pub fn had_runtime_error() -> bool {
 }
 
 pub fn error(line: u32, msg: String) {
-    eprintln!("HERE!");
     eprintln!("[line {}] Error: {}", line, msg);
     HAD_ERROR.store(true, Ordering::Relaxed);
 }
@@ -70,26 +69,26 @@ impl Display for RuntimeError {
                 )
             }
             RuntimeErrorType::InvalidLiteral => {
-                write!(f, "[line {}]: Invalid literal: {:?}", self.line, self.cause)
+                write!(f, "[line {}]: Invalid literal: {}", self.line, self.cause)
             }
             RuntimeErrorType::InvalidUnaryOperator => {
                 write!(
                     f,
-                    "[line {}]: Invalid unary operator: {:?}",
+                    "[line {}]: Invalid unary operator: {}",
                     self.line, self.cause
                 )
             }
             RuntimeErrorType::InvalidBinaryOperator => {
                 write!(
                     f,
-                    "[line {}]: Invalid binary operator: {:?}",
+                    "[line {}]: Invalid binary operator: {}",
                     self.line, self.cause
                 )
             }
             RuntimeErrorType::DivideByZero => {
                 write!(
                     f,
-                    "[line {}]: Cannot divide by zero: {:?}",
+                    "[line {}]: Cannot divide by zero: {}",
                     self.line, self.cause
                 )
             }
