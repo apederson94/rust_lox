@@ -48,9 +48,8 @@ fn run(script: String) {
     match expressions {
         Some(exprs) => {
             for expr in exprs {
-                match expr.interpret() {
-                    Ok(value) => println!("{:?}", value),
-                    Err(err) => errors::runtime_error(&err),
+                if let Err(e) = expr.interpret() {
+                    errors::runtime_error(&e)
                 }
             }
         }

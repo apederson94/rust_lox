@@ -44,7 +44,9 @@ impl Parser {
 
     fn print_statement(&mut self) -> Result<Stmt, ParseError> {
         let value = self.expression();
-        let _ = self.consume(TokenType::Semicolon, "Expect ';' after value");
+        if let Err(e) = self.consume(TokenType::Semicolon, "Expect ';' after value") {
+            return Err(e);
+        };
         return match value {
             Ok(e) => Ok(Stmt::Print(e)),
             Err(e) => Err(e),
@@ -53,7 +55,9 @@ impl Parser {
 
     fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
         let expression = self.expression();
-        let _ = self.consume(TokenType::Semicolon, "Expect ';' after expression");
+        if let Err(e) = self.consume(TokenType::Semicolon, "Expect ';' after expression") {
+            return Err(e);
+        };
         return match expression {
             Ok(e) => Ok(Stmt::Expression(e)),
             Err(e) => Err(e),
