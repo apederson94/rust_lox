@@ -1,5 +1,3 @@
-use std::process::exit;
-
 use crate::{
     errors,
     expr::Expr,
@@ -46,7 +44,7 @@ impl Parser {
 
     fn print_statement(&mut self) -> Result<Stmt, ParseError> {
         let value = self.expression();
-        self.consume(TokenType::Semicolon, "Expect ';' after value");
+        let _ = self.consume(TokenType::Semicolon, "Expect ';' after value");
         return match value {
             Ok(e) => Ok(Stmt::Print(e)),
             Err(e) => Err(e),
@@ -55,7 +53,7 @@ impl Parser {
 
     fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
         let expression = self.expression();
-        self.consume(TokenType::Semicolon, "Expect ';' after expression");
+        let _ = self.consume(TokenType::Semicolon, "Expect ';' after expression");
         return match expression {
             Ok(e) => Ok(Stmt::Expression(e)),
             Err(e) => Err(e),

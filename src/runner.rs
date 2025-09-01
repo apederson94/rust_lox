@@ -5,7 +5,7 @@ use std::{
     process,
 };
 
-use crate::{ast_printable::ASTPrintable, errors, interpretable::Interpretable, parser, scanner};
+use crate::{errors, interpretable::Interpretable, parser, scanner};
 
 pub fn run_file(path: String) -> Result<(), RunnerError> {
     let data = fs::read_to_string(path);
