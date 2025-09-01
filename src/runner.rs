@@ -36,7 +36,7 @@ fn run(script: String) {
     let mut scanner = scanner::Scanner::new(script);
     let tokens = scanner.scan_tokens();
     let mut parser = parser::Parser::new(tokens.clone());
-    let expression = parser.parse();
+    let expressions = parser.parse();
 
     if errors::had_error() {
         process::exit(65);
@@ -45,12 +45,13 @@ fn run(script: String) {
         process::exit(70);
     }
 
-    match expression {
-        Some(expr) => {
-            println!("{}", expr.print());
-            match expr.interpret() {
-                Ok(value) => println!("{:?}", value),
-                Err(err) => errors::runtime_error(&err),
+    match expressions {
+        Some(exprs) => {
+            for expr in exprs {
+                match expr.interpret() {
+                    Ok(value) => println!("{:?}", value),
+                    Err(err) => errors::runtime_error(&err),
+                }
             }
         }
         None => (),

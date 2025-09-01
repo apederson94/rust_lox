@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use crate::{
     errors,
     expr::Expr,
@@ -23,16 +25,14 @@ impl Parser {
     pub fn parse(&mut self) -> Option<Vec<Stmt>> {
         let mut statements: Vec<Stmt> = vec![];
         while !self.is_at_end() {
-            statements.append(self.statement());
+            match self.statement() {
+                Ok(s) => statements.push(s),
+                Err(e) => {
+                    errors::error(e.line, e.message);
+                    break;
+                }
+            }
         }
-        // old code
-        // match self.expression_list() {
-        //     Ok(expr) => Some(expr),
-        //     Err(err) => {
-        //         errors::error(err.line, err.message);
-        //         None
-        //     }
-        // }
         return Some(statements);
     }
 
