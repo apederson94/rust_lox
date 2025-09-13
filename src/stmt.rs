@@ -3,6 +3,7 @@ use crate::{errors::RuntimeError, expr::Expr, interpretable::Interpretable, lox_
 pub enum Stmt {
     Expression(Expr),
     Print(Expr),
+    Var { name: String, initializer: Expr },
 }
 
 impl Interpretable for Stmt {
@@ -18,6 +19,13 @@ impl Interpretable for Stmt {
                     Ok(LoxValue::Nil)
                 }
                 Err(error) => Err(error),
+            },
+            Stmt::Var {
+                name,
+                initializer: expr,
+            } => match expr.interpret() {
+                Ok(v) => Ok(v),
+                Err(e) => Err(e),
             },
         }
     }

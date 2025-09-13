@@ -37,6 +37,7 @@ impl ASTPrintable for Expr {
                 )
             }
             Expr::Unary { operator, right } => format!("({} {})", operator.lexeme(), right.print()),
+            Expr::Variable { token } => format!("var {}", token.lexeme()),
         }
     }
 }

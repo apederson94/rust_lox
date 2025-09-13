@@ -27,6 +27,9 @@ pub enum Expr {
         operator: Token,
         right: Box<Expr>,
     },
+    Variable {
+        token: Token,
+    },
 }
 
 impl Interpretable for Expr {
@@ -211,5 +214,6 @@ fn evaluate(expr: &Expr) -> Result<LoxValue, RuntimeError> {
             LoxValue::Bool(false) | LoxValue::Nil => alternative.interpret(),
             _ => consequent.interpret(),
         },
+        Expr::Variable { token } => match
     }
 }

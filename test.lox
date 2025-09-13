@@ -9,3 +9,5 @@ test comment
 print "one";
 print true;
 print 2 + 1;
+var test = 123;
+print test;

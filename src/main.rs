@@ -1,6 +1,7 @@
 use std::env::args;
 
 mod ast_printable;
+mod environment;
 mod errors;
 mod expr;
 mod interpretable;

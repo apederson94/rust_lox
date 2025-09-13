@@ -23,15 +23,56 @@ impl Parser {
     pub fn parse(&mut self) -> Option<Vec<Stmt>> {
         let mut statements: Vec<Stmt> = vec![];
         while !self.is_at_end() {
-            match self.statement() {
+            match self.declaration() {
                 Ok(s) => statements.push(s),
                 Err(e) => {
                     errors::error(e.line, e.message);
+                    self.synchronize();
                     break;
                 }
             }
         }
         return Some(statements);
+    }
+
+    fn declaration(&mut self) -> Result<Stmt, ParseError> {
+        if self.match_tokens(&[TokenType::Var]) {
+            self.var_declaration()
+        } else {
+            self.statement()
+        }
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, ParseError> {
+        let TokenType::Identifier(name) = self.peek().type_info() else {
+            return Err(ParseError {
+                message: String::from("Unexpected token: Expected identifier after keyword 'var'"),
+                line: self.previous().line(),
+            });
+        };
+
+        let name = name.clone();
+        self.advance();
+
+        if !self.match_tokens(&[TokenType::Equal]) {
+            return Err(ParseError {
+                message: String::from("Unexpexted token: Expected '=' after variable identifier"),
+                line: self.previous().line(),
+            });
+        };
+
+        match self.expression() {
+            Ok(initializer) => {
+                if let Err(e) = self.consume(
+                    TokenType::Semicolon,
+                    "Expected ';' after variable declaration",
+                ) {
+                    return Err(e);
+                }
+                Ok(Stmt::Var { name, initializer })
+            }
+            Err(e) => Err(e),
+        }
     }
 
     fn statement(&mut self) -> Result<Stmt, ParseError> {
@@ -199,6 +240,10 @@ impl Parser {
 
             TokenType::EndOfFile => Ok(Expr::Literal {
                 value: self.peek().clone(),
+            }),
+
+            TokenType::Identifier(_) => Ok(Expr::Variable {
+                token: self.previous().clone(),
             }),
 
             _ => Err(ParseError {
