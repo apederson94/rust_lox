@@ -88,10 +88,8 @@ impl Parser {
         if let Err(e) = self.consume(TokenType::Semicolon, "Expect ';' after value") {
             return Err(e);
         };
-        return match value {
-            Ok(e) => Ok(Stmt::Print(e)),
-            Err(e) => Err(e),
-        };
+
+        Ok(Stmt::Print(value?))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, ParseError> {
@@ -99,10 +97,7 @@ impl Parser {
         if let Err(e) = self.consume(TokenType::Semicolon, "Expect ';' after expression") {
             return Err(e);
         };
-        return match expression {
-            Ok(e) => Ok(Stmt::Expression(e)),
-            Err(e) => Err(e),
-        };
+        return Ok(Stmt::Expression(expression?));
     }
 
     fn expression_list(&mut self) -> Result<Expr, ParseError> {

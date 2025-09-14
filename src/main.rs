@@ -19,12 +19,9 @@ fn main() {
     if arguments.len() > 2 {
         std::process::exit(64);
     } else if arguments.len() == 2 {
-        match runner::run_file(arguments[1].clone()) {
-            Ok(_) => {}
-            Err(e) => {
-                eprintln!("{}", e);
-                std::process::exit(99);
-            }
+        if let Err(e) = runner::run_file(arguments[1].clone()) {
+            eprintln!("{}", e);
+            std::process::exit(99);
         }
     } else {
         runner::run_prompt()

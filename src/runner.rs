@@ -5,7 +5,7 @@ use std::{
     process,
 };
 
-use crate::{errors, interpretable::Interpretable, parser, scanner};
+use crate::{environment::Environment, errors, interpretable::Interpretable, parser, scanner};
 
 pub fn run_file(path: String) -> Result<(), RunnerError> {
     let data = fs::read_to_string(path);
@@ -37,6 +37,7 @@ fn run(script: String) {
     let tokens = scanner.scan_tokens();
     let mut parser = parser::Parser::new(tokens.clone());
     let expressions = parser.parse();
+    let mut environment = Environment::new();
 
     if errors::had_error() {
         process::exit(65);

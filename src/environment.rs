@@ -13,11 +13,16 @@ pub enum EnvironmentError {
     UndefinedVariable,
 }
 
-struct Environment {
+pub struct Environment {
     values: HashMap<String, EnvironmentValue>,
 }
 
 impl Environment {
+    pub fn new() -> Self {
+        Environment {
+            values: HashMap::new(),
+        }
+    }
     pub fn define(&mut self, name: String, value: EnvironmentValue) {
         self.values.insert(name, value);
     }
